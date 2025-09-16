@@ -1,0 +1,927 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OSL - Operating Model</title>
+    <meta name="description" content="OutSystems Subject Leads Operating Model - A comprehensive guide for bridging Product and Field teams">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Source+Sans+Pro:wght@400;600;700&family=Merriweather:wght@400;700&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'gov-blue': {
+                            50: '#f0f9ff',
+                            100: '#e0f2fe',
+                            500: '#0ea5e9',
+                            600: '#0284c7',
+                            700: '#0369a1',
+                            900: '#0c4a6e'
+                        },
+                        'gov-gray': {
+                            50: '#f8fafc',
+                            100: '#f1f5f9',
+                            200: '#e2e8f0',
+                            300: '#cbd5e1',
+                            500: '#64748b',
+                            700: '#334155',
+                            800: '#1e293b',
+                            900: '#0f172a'
+                        }
+                    },
+                    fontFamily: {
+                        'sans': ['Source Sans Pro', 'system-ui', 'sans-serif'],
+                        'serif': ['Merriweather', 'Georgia', 'serif']
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            font-family: 'Source Sans Pro', system-ui, sans-serif;
+            line-height: 1.6;
+        }
+        
+        .hero-gradient {
+            background: linear-gradient(135deg, #0369a1 0%, #0284c7 50%, #0ea5e9 100%);
+        }
+        
+        .nav-link {
+            position: relative;
+            transition: all 0.3s ease;
+        }
+        
+        .nav-link.active::before {
+            content: '';
+            position: absolute;
+            left: -1rem;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 4px;
+            height: 100%;
+            background-color: #0284c7;
+            border-radius: 2px;
+        }
+        
+        .nav-link:hover {
+            transform: translateX(4px);
+            background-color: #f0f9ff;
+        }
+        
+        .nav-link.active {
+            background-color: #e0f2fe !important;
+            color: #0369a1 !important;
+            font-weight: 600 !important;
+            transform: translateX(4px);
+        }
+        
+        .nav-link.active span {
+            color: #0369a1;
+        }
+        
+        .content-section {
+            display: none;
+            animation: fadeIn 0.4s ease-in;
+        }
+        
+        .content-section.active {
+            display: block;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .card {
+            transition: all 0.3s ease;
+            border: 1px solid #e2e8f0;
+        }
+        
+        .card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        }
+        
+        .tab-button.active {
+            border-color: #0284c7;
+            color: #0284c7;
+            background-color: #f0f9ff;
+            border-bottom-width: 3px;
+        }
+        
+        .progress-step {
+            position: relative;
+        }
+        
+        .progress-step::after {
+            content: '';
+            position: absolute;
+            top: 2rem;
+            left: 50%;
+            width: 100%;
+            height: 2px;
+            background-color: #e2e8f0;
+            z-index: -1;
+        }
+        
+        .progress-step:last-child::after {
+            display: none;
+        }
+        
+        .flow-arrow {
+            opacity: 0.6;
+            transition: opacity 0.3s ease;
+        }
+        
+        .flow-node:hover + .flow-arrow,
+        .flow-arrow:hover {
+            opacity: 1;
+        }
+        
+        .section-header {
+            border-left: 4px solid #0284c7;
+            padding-left: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        
+        .raci-table {
+            font-size: 0.875rem;
+        }
+        
+        .raci-table th {
+            background: linear-gradient(to bottom, #f1f5f9, #e2e8f0);
+            font-weight: 600;
+            color: #334155;
+        }
+        
+        .raci-table tr:nth-child(even) {
+            background-color: #f8fafc;
+        }
+        
+        .raci-table tr:hover {
+            background-color: #f0f9ff;
+        }
+        
+        .metric-card {
+            background: linear-gradient(135deg, #f8fafc 0%, #ffffff 100%);
+        }
+        
+        .phase-card {
+            border-top: 4px solid;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .phase-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
+            transition: left 0.5s ease;
+        }
+        
+        .phase-card:hover::before {
+            left: 100%;
+        }
+        
+        .breadcrumb {
+            font-size: 0.875rem;
+            color: #64748b;
+        }
+    </style>
+</head>
+<body class="bg-white text-gov-gray-900 antialiased">
+
+    <!-- Hero Section -->
+    <header class="hero-gradient text-white">
+        <div class="px-4 py-8">
+            <div class="md:ml-80">
+                <div class="flex flex-col md:flex-row md:items-center md:justify-between">
+                    <div class="mb-6 md:mb-0">
+                        <div class="flex items-center mb-2">
+                            <div class="bg-white bg-opacity-20 backdrop-blur-sm rounded-lg p-3 mr-4">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
+                                </svg>
+                            </div>
+                            <div>
+                                <h1 class="text-3xl md:text-4xl font-bold font-serif">OSL - Operating Model</h1>
+                                <p class="text-gov-blue-100 text-lg font-medium">OutSystems Subject Leads</p>
+                            </div>
+                        </div>
+                        <p class="text-gov-blue-50 max-w-2xl text-lg leading-relaxed">
+                            A comprehensive framework for bridging Product and Field teams through structured dissemination, intelligence gathering, and enablement programs.
+                        </p>
+                    </div>
+                    <div class="flex space-x-4">
+                        <div class="text-center">
+                            <div class="text-2xl font-bold">3</div>
+                            <div class="text-sm text-gov-blue-100">Core Pillars</div>
+                        </div>
+                        <div class="text-center">
+                            <div class="text-2xl font-bold">9</div>
+                            <div class="text-sm text-gov-blue-100">Key Sections</div>
+                        </div>
+                        <div class="text-center">
+                            <div class="text-2xl font-bold">90</div>
+                            <div class="text-sm text-gov-blue-100">Day Rollout</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <div class="min-h-screen bg-gov-gray-50">
+        <!-- Sidebar -->
+        <aside class="w-80 bg-white shadow-lg fixed h-full hidden md:flex flex-col z-10" style="top: 0; height: 100vh; left: 0;">
+            <div class="p-6 border-b border-gov-gray-200">
+                <div class="breadcrumb mb-4">
+                    <span>Home</span> / <span class="text-gov-blue-600 font-medium">Operating Model</span>
+                </div>
+                <h2 class="text-lg font-semibold text-gov-gray-900">Navigation</h2>
+                <p class="text-sm text-gov-gray-600 mt-1">Jump to any section</p>
+            </div>
+            <nav id="sidebar-nav" class="flex-1 p-6 overflow-y-auto">
+                <div class="space-y-1">
+                    <a href="#purpose" class="nav-link active flex items-center px-4 py-3 rounded-lg text-gov-gray-700 hover:text-gov-blue-700 transition-all duration-200">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-3 text-gov-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
+                        <span class="font-medium">Purpose & Taxonomy</span>
+                    </a>
+                    <a href="#flow" class="nav-link flex items-center px-4 py-3 rounded-lg text-gov-gray-700 hover:text-gov-blue-700 transition-all duration-200">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-3 text-gov-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                        </svg>
+                        <span class="font-medium">Information Flow</span>
+                    </a>
+                    <a href="#tools" class="nav-link flex items-center px-4 py-3 rounded-lg text-gov-gray-700 hover:text-gov-blue-700 transition-all duration-200">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-3 text-gov-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                        </svg>
+                        <span class="font-medium">Tool Setup</span>
+                    </a>
+                    <a href="#artifacts" class="nav-link flex items-center px-4 py-3 rounded-lg text-gov-gray-700 hover:text-gov-blue-700 transition-all duration-200">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-3 text-gov-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                        </svg>
+                        <span class="font-medium">Core Artifacts</span>
+                    </a>
+                    <a href="#cadence" class="nav-link flex items-center px-4 py-3 rounded-lg text-gov-gray-700 hover:text-gov-blue-700 transition-all duration-200">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-3 text-gov-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
+                        <span class="font-medium">Communication Cadence</span>
+                    </a>
+                    <a href="#enablement" class="nav-link flex items-center px-4 py-3 rounded-lg text-gov-gray-700 hover:text-gov-blue-700 transition-all duration-200">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-3 text-gov-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/>
+                        </svg>
+                        <span class="font-medium">Enablement Ladder</span>
+                    </a>
+                    <a href="#kpis" class="nav-link flex items-center px-4 py-3 rounded-lg text-gov-gray-700 hover:text-gov-blue-700 transition-all duration-200">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-3 text-gov-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+                        </svg>
+                        <span class="font-medium">KPIs & OKRs</span>
+                    </a>
+                    <a href="#raci" class="nav-link flex items-center px-4 py-3 rounded-lg text-gov-gray-700 hover:text-gov-blue-700 transition-all duration-200">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-3 text-gov-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
+                        </svg>
+                        <span class="font-medium">RACI Matrix</span>
+                    </a>
+                    <a href="#actions" class="nav-link flex items-center px-4 py-3 rounded-lg text-gov-gray-700 hover:text-gov-blue-700 transition-all duration-200">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-3 text-gov-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/>
+                        </svg>
+                        <span class="font-medium">Action Plan</span>
+                    </a>
+                </div>
+            </nav>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="flex-1 p-6 md:p-10" style="margin-left: 0;">
+            <div class="md:ml-80">
+                <!-- This inner div provides the sidebar margin on medium screens and up -->
+             <div class="max-w-7xl mx-auto">
+                 <!-- Header for Mobile -->
+                 <div class="md:hidden bg-white rounded-lg shadow-sm border p-6 mb-8">
+                     <h1 class="text-2xl font-bold text-gov-gray-900 mb-4">OSL - Operating Model</h1>
+                     <select id="mobile-nav" class="w-full p-3 border border-gov-gray-300 rounded-lg bg-white focus:ring-2 focus:ring-gov-blue-500 focus:border-gov-blue-500">
+                         <option value="purpose">Purpose & Taxonomy</option>
+                         <option value="flow">Information Flow</option>
+                         <option value="tools">Tool Setup</option>
+                         <option value="artifacts">Core Artifacts</option>
+                         <option value="cadence">Communication Cadence</option>
+                         <option value="enablement">Enablement Ladder</option>
+                         <option value="kpis">KPIs & OKRs</option>
+                         <option value="raci">RACI Matrix</option>
+                         <option value="actions">Action Plan</option>
+                     </select>
+                 </div>
+
+                <!-- Section: Purpose & Taxonomy -->
+                <section id="purpose" class="content-section active">
+                    <div class="section-header">
+                        <h2 class="text-4xl font-bold text-gov-gray-900 font-serif mb-3">Purpose & Taxonomy</h2>
+                        <p class="text-lg text-gov-gray-600">A clear, concise framework for the OutSystems Subject Leads (OSL) to bridge Product and Field teams.</p>
+                    </div>
+
+                    <div class="bg-white rounded-xl shadow-sm border border-gov-gray-200 p-8 mb-8">
+                        <div class="grid lg:grid-cols-2 gap-12 items-center">
+                            <div>
+                                <h3 class="text-2xl font-semibold mb-6 text-gov-gray-900 font-serif">Core Mission: The Three Pillars</h3>
+                                <p class="text-gov-gray-600 mb-8 text-lg leading-relaxed">The OSL team operates on three core functions designed to create a seamless feedback and enablement loop across the organization.</p>
+                                <div class="space-y-6">
+                                    <div class="flex items-start p-4 bg-gov-blue-50 rounded-lg">
+                                        <div class="bg-gov-blue-600 text-white rounded-full h-8 w-8 flex items-center justify-center font-bold mr-4 text-sm flex-shrink-0">1</div>
+                                        <div>
+                                            <h4 class="font-semibold text-gov-gray-900 mb-2">Dissemination</h4>
+                                            <p class="text-gov-gray-700">Translate product updates into clear, actionable assets for the field. Make new capabilities impossible to miss.</p>
+                                        </div>
+                                    </div>
+                                    <div class="flex items-start p-4 bg-gov-blue-50 rounded-lg">
+                                        <div class="bg-gov-blue-600 text-white rounded-full h-8 w-8 flex items-center justify-center font-bold mr-4 text-sm flex-shrink-0">2</div>
+                                        <div>
+                                            <h4 class="font-semibold text-gov-gray-900 mb-2">Intelligence</h4>
+                                            <p class="text-gov-gray-700">Capture structured feedback, competitive insights, and win/loss analysis from the field to inform the product roadmap.</p>
+                                        </div>
+                                    </div>
+                                    <div class="flex items-start p-4 bg-gov-blue-50 rounded-lg">
+                                        <div class="bg-gov-blue-600 text-white rounded-full h-8 w-8 flex items-center justify-center font-bold mr-4 text-sm flex-shrink-0">3</div>
+                                        <div>
+                                            <h4 class="font-semibold text-gov-gray-900 mb-2">Enablement</h4>
+                                            <p class="text-gov-gray-700">Deliver scalable training programs (101, 201, 301) to ensure field teams are confident and competent in capabilities.</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="chart-container bg-gov-gray-50 rounded-lg p-6">
+                                <canvas id="pillarsChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-white rounded-xl shadow-sm border border-gov-gray-200 p-8">
+                        <h3 class="text-2xl font-semibold mb-4 text-gov-gray-900 font-serif">Shared Taxonomy</h3>
+                        <p class="text-gov-gray-600 mb-8 text-lg">Standardized labels are critical. Use these tags consistently across all tools (Salesforce, Productboard, Confluence).</p>
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                            <div class="card bg-white p-6 rounded-lg border border-gov-gray-200 hover:border-gov-blue-300">
+                                <div class="w-12 h-12 bg-gov-blue-100 rounded-lg flex items-center justify-center mb-4">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-gov-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"/>
+                                    </svg>
+                                </div>
+                                <h4 class="font-semibold text-gov-gray-900 mb-2">Capability</h4>
+                                <p class="text-gov-gray-600">Product-level feature. Ex: RAG, Guardrails, Tool Use, Orchestration.</p>
+                            </div>
+                            <div class="card bg-white p-6 rounded-lg border border-gov-gray-200 hover:border-gov-blue-300">
+                                <div class="w-12 h-12 bg-gov-blue-100 rounded-lg flex items-center justify-center mb-4">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-gov-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/>
+                                    </svg>
+                                </div>
+                                <h4 class="font-semibold text-gov-gray-900 mb-2">Use Case</h4>
+                                <p class="text-gov-gray-600">Customer problem solved. Ex: Claims Triage, Loan Pre-qualification.</p>
+                            </div>
+                            <div class="card bg-white p-6 rounded-lg border border-gov-gray-200 hover:border-gov-blue-300">
+                                <div class="w-12 h-12 bg-gov-blue-100 rounded-lg flex items-center justify-center mb-4">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-gov-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
+                                    </svg>
+                                </div>
+                                <h4 class="font-semibold text-gov-gray-900 mb-2">Solution</h4>
+                                <p class="text-gov-gray-600">Sellable bundle. Ex: "Agentic Claims Triage for Insurance" package.</p>
+                            </div>
+                            <div class="card bg-white p-6 rounded-lg border border-gov-gray-200 hover:border-gov-blue-300">
+                                <div class="w-12 h-12 bg-gov-blue-100 rounded-lg flex items-center justify-center mb-4">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-gov-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                    </svg>
+                                </div>
+                                <h4 class="font-semibold text-gov-gray-900 mb-2">Region</h4>
+                                <p class="text-gov-gray-600">Geographic area. Ex: AMER, EMEA, APAC, ANZ, JP.</p>
+                            </div>
+                            <div class="card bg-white p-6 rounded-lg border border-gov-gray-200 hover:border-gov-blue-300">
+                                <div class="w-12 h-12 bg-gov-blue-100 rounded-lg flex items-center justify-center mb-4">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-gov-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/>
+                                    </svg>
+                                </div>
+                                <h4 class="font-semibold text-gov-gray-900 mb-2">Maturity</h4>
+                                <p class="text-gov-gray-600">Enablement level. Ex: 101 (Intro), 201 (Hands-on), 301 (Advanced).</p>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Section: Information Flow -->
+                <section id="flow" class="content-section">
+                    <div class="section-header">
+                        <h2 class="text-4xl font-bold text-gov-gray-900 font-serif mb-3">Information Flow</h2>
+                        <p class="text-lg text-gov-gray-600">A continuous loop between Product and Field, facilitated by the OSL team.</p>
+                    </div>
+                    <div class="bg-white rounded-xl shadow-sm border border-gov-gray-200 p-8 mb-8">
+                        <h3 class="text-2xl font-semibold text-gov-gray-900 font-serif mb-6 flex items-center">
+                            <span class="text-gov-blue-600 mr-3">➜</span> Product to Field: Dissemination & Enablement
+                        </h3>
+                        <div class="flex flex-col lg:flex-row items-center justify-between space-y-6 lg:space-y-0 lg:space-x-6">
+                            <div class="card bg-gov-blue-50 p-6 rounded-lg border border-gov-blue-200 w-full lg:w-1/3 text-center">
+                                <div class="w-12 h-12 bg-gov-blue-600 text-white rounded-full flex items-center justify-center font-bold mx-auto mb-4">1</div>
+                                <h4 class="font-semibold text-gov-gray-900 mb-2">Product Changelog</h4>
+                                <p class="text-gov-gray-600">New feature/update released.</p>
+                            </div>
+                            <div class="text-3xl text-gov-blue-400">→</div>
+                            <div class="card bg-gov-blue-50 p-6 rounded-lg border border-gov-blue-200 w-full lg:w-1/3 text-center">
+                                <div class="w-12 h-12 bg-gov-blue-600 text-white rounded-full flex items-center justify-center font-bold mx-auto mb-4">2</div>
+                                <h4 class="font-semibold text-gov-gray-900 mb-2">OSL Creates Assets</h4>
+                                <p class="text-gov-gray-600">Capability Brief, Solution Playbook, Demo Kit.</p>
+                            </div>
+                            <div class="text-3xl text-gov-blue-400">→</div>
+                            <div class="card bg-gov-blue-50 p-6 rounded-lg border border-gov-blue-200 w-full lg:w-1/3 text-center">
+                                <div class="w-12 h-12 bg-gov-blue-600 text-white rounded-full flex items-center justify-center font-bold mx-auto mb-4">3</div>
+                                <h4 class="font-semibold text-gov-gray-900 mb-2">Field Enablement</h4>
+                                <p class="text-gov-gray-600">Regional clinics, 101/201 training.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-white rounded-xl shadow-sm border border-gov-gray-200 p-8">
+                        <h3 class="text-2xl font-semibold text-gov-gray-900 font-serif mb-6 flex items-center">
+                            <span class="text-gov-blue-600 mr-3">➜</span> Field to Product: Intelligence & Feedback
+                        </h3>
+                        <div class="flex flex-col lg:flex-row items-center justify-between space-y-6 lg:space-y-0 lg:space-x-6">
+                            <div class="card bg-gov-blue-50 p-6 rounded-lg border border-gov-blue-200 w-full lg:w-1/3 text-center">
+                                <div class="w-12 h-12 bg-gov-blue-600 text-white rounded-full flex items-center justify-center font-bold mx-auto mb-4">1</div>
+                                <h4 class="font-semibold text-gov-gray-900 mb-2">Field Captures Intel</h4>
+                                <p class="text-gov-gray-600">Via Slack form, SFDC fields, Win/Loss notes.</p>
+                            </div>
+                            <div class="text-3xl text-gov-blue-400">→</div>
+                            <div class="card bg-gov-blue-50 p-6 rounded-lg border border-gov-blue-200 w-full lg:w-1/3 text-center">
+                                <div class="w-12 h-12 bg-gov-blue-600 text-white rounded-full flex items-center justify-center font-bold mx-auto mb-4">2</div>
+                                <h4 class="font-semibold text-gov-gray-900 mb-2">OSL Triages & Synthesizes</h4>
+                                <p class="text-gov-gray-600">Triage in Productboard. Identify patterns. Create "Top 5 Gaps".</p>
+                            </div>
+                            <div class="text-3xl text-gov-blue-400">→</div>
+                            <div class="card bg-gov-blue-50 p-6 rounded-lg border border-gov-blue-200 w-full lg:w-1/3 text-center">
+                                <div class="w-12 h-12 bg-gov-blue-600 text-white rounded-full flex items-center justify-center font-bold mx-auto mb-4">3</div>
+                                <h4 class="font-semibold text-gov-gray-900 mb-2">Product Reviews & Acts</h4>
+                                <p class="text-gov-gray-600">Review gaps with $ impact. Inform roadmap.</p>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Section: Tool Setup -->
+                <section id="tools" class="content-section mb-12">
+                    <h2 class="text-3xl font-bold text-slate-900 mb-2">Tool Setup</h2>
+                    <p class="text-slate-600 mb-6">Specific configurations for our existing tool stack.</p>
+                    <div>
+                        <div class="border-b border-slate-200 mb-6">
+                            <nav class="flex space-x-4" id="tool-tabs">
+                                <button data-target="confluence" class="tab-button active py-2 px-4 border-b-2 font-medium text-slate-500">Confluence</button>
+                                <button data-target="productboard" class="tab-button py-2 px-4 border-b-2 font-medium text-slate-500">Productboard</button>
+                                <button data-target="slack" class="tab-button py-2 px-4 border-b-2 font-medium text-slate-500">Slack</button>
+                                <button data-target="salesforce" class="tab-button py-2 px-4 border-b-2 font-medium text-slate-500">Salesforce</button>
+                            </nav>
+                        </div>
+                        <div id="tool-content">
+                            <!-- Confluence -->
+                            <div data-id="confluence" class="tool-tab-content">
+                                <h3 class="font-semibold text-lg mb-2">Role: Single Source of Truth</h3>
+                                <ul class="list-disc list-inside space-y-2 text-slate-700">
+                                    <li><strong>Space:</strong> OSL – Agentic</li>
+                                    <li><strong>Structure:</strong> Home page with "What's New" feed. Parent pages for Capabilities, Solutions, Competitive, and Enablement.</li>
+                                    <li><strong>Templates:</strong> Use standardized templates for Capability Briefs, Solution Playbooks, and Battlecards.</li>
+                                    <li><strong>Labels:</strong> Enforce taxonomy labels (e.g., `capability-rag`, `region-apac`) for searchability.</li>
+                                    <li><strong>Governance:</strong> Each page must have an owner and a "last reviewed" date. Archive old content aggressively.</li>
+                                </ul>
+                            </div>
+                            <!-- Productboard -->
+                            <div data-id="productboard" class="tool-tab-content hidden">
+                                <h3 class="font-semibold text-lg mb-2">Role: Feedback Intake & Triage</h3>
+                                 <ul class="list-disc list-inside space-y-2 text-slate-700">
+                                    <li><strong>Feedback Portal:</strong> "OSL – Field Feedback (Agentic)"</li>
+                                    <li><strong>Required Fields:</strong> Region, SFDC Opportunity Link, Capability/Use Case, Fit (Good/Partial/Poor), Gap Description, Competitors.</li>
+                                    <li><strong>Triage SLA:</strong> 5 business days for regional OSL to enrich, tag, and link to a feature.</li>
+                                    <li><strong>Synthesis:</strong> OSL aggregates patterns into a "Top 5 Gaps" collection, reviewed monthly with Product.</li>
+                                </ul>
+                            </div>
+                            <!-- Slack -->
+                            <div data-id="slack" class="tool-tab-content hidden">
+                                <h3 class="font-semibold text-lg mb-2">Role: Real-time Communication</h3>
+                                <ul class="list-disc list-inside space-y-2 text-slate-700">
+                                    <li><strong>#agentic-announcements:</strong> Read-only. For official OSL updates.</li>
+                                    <li><strong>#agentic-field-intel:</strong> Open channel with a Workflow Form that pushes feedback directly to the Productboard portal.</li>
+                                    <li><strong>Regional Channels:</strong> e.g., `#agentic-anz`. For local discussions, wins, and clinic invites.</li>
+                                    <li><strong>Pins:</strong> Pin links to Confluence, Productboard portal, and demo environments in relevant channels.</li>
+                                </ul>
+                            </div>
+                             <!-- Salesforce -->
+                            <div data-id="salesforce" class="tool-tab-content hidden">
+                                <h3 class="font-semibold text-lg mb-2">Role: Business Context & Reporting</h3>
+                                <ul class="list-disc list-inside space-y-2 text-slate-700">
+                                    <li><strong>Custom Fields (Opportunity):</strong> Create picklists for `Agentic_Use_Case__c`, `Agentic_Capability__c`, `Agentic_Fit__c`, and `Agentic_Competitors__c`.</li>
+                                    <li><strong>Reporting:</strong> Build dashboards to track pipeline influenced by Agentic, win rates vs. competitors, and common product gaps by region.</li>
+                                    <li><strong>Automation:</strong> When `Agentic_Fit__c` is "Poor", auto-post a reminder to the relevant Slack channel to submit detailed feedback.</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Section: Core Artifacts -->
+                <section id="artifacts" class="content-section mb-12">
+                    <h2 class="text-3xl font-bold text-slate-900 mb-2">Core Artifacts</h2>
+                    <p class="text-slate-600 mb-6">The key documents produced by the OSL team. Standardize with Confluence templates.</p>
+                    <div class="grid md:grid-cols-2 gap-6">
+                        <div class="bg-white p-6 rounded-lg border">
+                            <h3 class="font-semibold text-lg mb-2">Capability Brief (1-Pager)</h3>
+                            <p class="text-slate-600 text-sm">Translates a product feature for the field.</p>
+                            <ul class="mt-4 text-sm list-disc list-inside space-y-1">
+                                <li>What it is & when to use it</li>
+                                <li>Prerequisites & limitations</li>
+                                <li>3-step demo script</li>
+                                <li>Top 5 FAQs</li>
+                            </ul>
+                        </div>
+                        <div class="bg-white p-6 rounded-lg border">
+                            <h3 class="font-semibold text-lg mb-2">Solution Playbook</h3>
+                            <p class="text-slate-600 text-sm">A guide to selling a bundled solution.</p>
+                             <ul class="mt-4 text-sm list-disc list-inside space-y-1">
+                                <li>Target problem & customer fit</li>
+                                <li>Reference architecture</li>
+                                <li>Demo kit & implementation steps</li>
+                                <li>Bill of Materials (BOM) & security notes</li>
+                            </ul>
+                        </div>
+                        <div class="bg-white p-6 rounded-lg border">
+                            <h3 class="font-semibold text-lg mb-2">Competitive Battlecard</h3>
+                            <p class="text-slate-600 text-sm">How to win against specific competitors.</p>
+                             <ul class="mt-4 text-sm list-disc list-inside space-y-1">
+                                <li>Where they win / Where we win</li>
+                                <li>Landmine discovery questions</li>
+                                <li>Objection handling & counters</li>
+                                <li>Approved claims with proof points</li>
+                            </ul>
+                        </div>
+                        <div class="bg-white p-6 rounded-lg border">
+                            <h3 class="font-semibold text-lg mb-2">Win/Loss Brief</h3>
+                            <p class="text-slate-600 text-sm">Quick analysis post-deal to capture insights.</p>
+                             <ul class="mt-4 text-sm list-disc list-inside space-y-1">
+                                <li>SFDC link & deal summary</li>
+                                <li>Primary reason for win/loss</li>
+                                <li>What helped (features/assets)</li>
+                                <li>What hurt (gaps/competitors)</li>
+                            </ul>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Section: Cadence -->
+                <section id="cadence" class="content-section mb-12">
+                    <h2 class="text-3xl font-bold text-slate-900 mb-2">Communication Cadence</h2>
+                    <p class="text-slate-600 mb-6">A predictable rhythm of meetings and async updates.</p>
+                     <div class="space-y-4">
+                        <div class="bg-white p-4 rounded-lg border flex items-start">
+                            <div class="bg-slate-800 text-white font-bold rounded-md px-3 py-1 mr-4 text-center">Weekly</div>
+                            <div>
+                                <h3 class="font-semibold">OSL Global Sync (45 min)</h3>
+                                <p class="text-sm text-slate-600">Topics: Field wins/signals, roadmap updates, top gaps, action items.</p>
+                            </div>
+                        </div>
+                        <div class="bg-white p-4 rounded-lg border flex items-start">
+                             <div class="bg-slate-800 text-white font-bold rounded-md px-3 py-1 mr-4 text-center">Bi-Weekly</div>
+                            <div>
+                                <h3 class="font-semibold">Regional Enablement Clinic (45-60 min)</h3>
+                                <p class="text-sm text-slate-600">Topics: 101/201 training rotation, live demo practice, deal Q&A.</p>
+                            </div>
+                        </div>
+                        <div class="bg-white p-4 rounded-lg border flex items-start">
+                            <div class="bg-slate-800 text-white font-bold rounded-md px-3 py-1 mr-4 text-center">Monthly</div>
+                            <div>
+                                <h3 class="font-semibold">Product Partnership (60 min)</h3>
+                                <p class="text-sm text-slate-600">Topics: Present "Top 5 Gaps" with SFDC $ evidence, roadmap alignment.</p>
+                            </div>
+                        </div>
+                         <div class="bg-white p-4 rounded-lg border flex items-start">
+                            <div class="bg-slate-800 text-white font-bold rounded-md px-3 py-1 mr-4 text-center">Quarterly</div>
+                            <div>
+                                <h3 class="font-semibold">Strategic Review (90 min)</h3>
+                                <p class="text-sm text-slate-600">Topics: Regional performance, win/loss themes, competitive landscape, solution roadmap.</p>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Section: Enablement -->
+                <section id="enablement" class="content-section mb-12">
+                    <h2 class="text-3xl font-bold text-slate-900 mb-2">Enablement Ladder</h2>
+                    <p class="text-slate-600 mb-6">A structured path to build field competency.</p>
+                    <div class="flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0 relative">
+                         <div class="absolute top-1/2 left-0 w-full h-1 bg-slate-200 hidden md:block" style="z-index: -1;"></div>
+                         <div class="absolute top-1/2 left-0 w-1 h-full bg-slate-200 md:hidden" style="z-index: -1;"></div>
+
+                        <div class="text-center w-full md:w-1/3 p-4">
+                            <div class="mx-auto bg-sky-100 text-sky-700 w-16 h-16 rounded-full flex items-center justify-center font-bold text-xl border-4 border-white shadow">101</div>
+                            <h3 class="font-semibold mt-2">Introduction</h3>
+                            <p class="text-sm text-slate-500">The "what" and "why". Includes a 5-min demo and a 1-pager. Certification via quiz.</p>
+                        </div>
+                        <div class="text-center w-full md:w-1/3 p-4">
+                             <div class="mx-auto bg-sky-400 text-white w-16 h-16 rounded-full flex items-center justify-center font-bold text-xl border-4 border-white shadow">201</div>
+                            <h3 class="font-semibold mt-2">Hands-On</h3>
+                            <p class="text-sm text-slate-500">Build and configure. Includes a hands-on lab. Certification via demo checklist.</p>
+                        </div>
+                        <div class="text-center w-full md:w-1/3 p-4">
+                             <div class="mx-auto bg-sky-700 text-white w-16 h-16 rounded-full flex items-center justify-center font-bold text-xl border-4 border-white shadow">301</div>
+                            <h3 class="font-semibold mt-2">Advanced</h3>
+                            <p class="text-sm text-slate-500">Architecture & production. Includes hardening for security/scale. Certification via practical exam.</p>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Section: KPIs -->
+                <section id="kpis" class="content-section mb-12">
+                    <h2 class="text-3xl font-bold text-slate-900 mb-2">KPIs & OKRs</h2>
+                    <p class="text-slate-600 mb-6">Measuring what matters to track success and impact.</p>
+                     <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                         <div class="bg-white p-6 rounded-lg border">
+                             <h3 class="font-semibold text-lg mb-2">Adoption</h3>
+                             <ul class="text-sm list-disc list-inside space-y-1 text-slate-600">
+                                 <li>% of field completing 201 certification</li>
+                                 <li># of demos run per region/month</li>
+                             </ul>
+                         </div>
+                         <div class="bg-white p-6 rounded-lg border">
+                             <h3 class="font-semibold text-lg mb-2">Business Impact</h3>
+                             <ul class="text-sm list-disc list-inside space-y-1 text-slate-600">
+                                 <li>Pipeline influenced by Agentic ($)</li>
+                                 <li>Win rate vs. top 3 competitors</li>
+                                 <li>% of opportunities with "Good" fit rating</li>
+                             </ul>
+                         </div>
+                         <div class="bg-white p-6 rounded-lg border">
+                             <h3 class="font-semibold text-lg mb-2">Feedback Loop Health</h3>
+                             <ul class="text-sm list-disc list-inside space-y-1 text-slate-600">
+                                 <li>Avg. time from feedback submission to triage</li>
+                                 <li>% of feedback notes with SFDC link</li>
+                                 <li># of roadmap items influenced</li>
+                             </ul>
+                         </div>
+                    </div>
+                    <div class="mt-8 bg-sky-50 border-l-4 border-sky-500 text-sky-800 p-4 rounded-r-lg">
+                        <h4 class="font-bold">Example OKR (Q4)</h4>
+                        <p class="mt-2 text-sm"><strong class="font-semibold">Objective:</strong> Achieve field readiness for Agentic in all regions.</p>
+                        <ul class="mt-2 list-disc list-inside text-sm">
+                            <li><strong>KR1:</strong> Certify 80% of pre-sales globally on Agentic-201.</li>
+                            <li><strong>KR2:</strong> Source 30 new qualified opportunities tagged with an Agentic use case.</li>
+                            <li><strong>KR3:</strong> Reduce feedback triage time from 10 days to 5 days.</li>
+                        </ul>
+                    </div>
+                </section>
+
+                <!-- Section: RACI -->
+                <section id="raci" class="content-section mb-12">
+                    <h2 class="text-3xl font-bold text-slate-900 mb-2">RACI Matrix</h2>
+                    <p class="text-slate-600 mb-6">Clarifying roles and responsibilities for key activities. (A=Accountable, R=Responsible, C=Consulted, I=Informed)</p>
+                    <div class="overflow-x-auto bg-white border rounded-lg">
+                        <table class="w-full text-sm raci-table">
+                            <thead>
+                                <tr class="bg-slate-50">
+                                    <th class="text-left p-3">Workstream / Action</th>
+                                    <th>OSL Central</th>
+                                    <th>OSL Regional</th>
+                                    <th>Product</th>
+                                    <th>Sales (AE)</th>
+                                    <th>Pre-Sales (SE)</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr class="hover:bg-slate-50">
+                                    <td class="text-left font-medium p-3">Field Feedback Triage</td>
+                                    <td>A</td>
+                                    <td>R</td>
+                                    <td>C</td>
+                                    <td>I</td>
+                                    <td>I</td>
+                                </tr>
+                                <tr class="hover:bg-slate-50">
+                                    <td class="text-left font-medium p-3">"Top 5 Gaps" Synthesis</td>
+                                    <td>A</td>
+                                    <td>C</td>
+                                    <td>R</td>
+                                    <td>I</td>
+                                    <td>I</td>
+                                </tr>
+                                <tr class="hover:bg-slate-50">
+                                    <td class="text-left font-medium p-3">Capability Brief Update</td>
+                                    <td>A</td>
+                                    <td>C</td>
+                                    <td>R</td>
+                                    <td>I</td>
+                                    <td>C</td>
+                                </tr>
+                                 <tr class="hover:bg-slate-50">
+                                    <td class="text-left font-medium p-3">Solution Playbook Creation</td>
+                                    <td>A</td>
+                                    <td>C</td>
+                                    <td>C</td>
+                                    <td>C</td>
+                                    <td>R</td>
+                                </tr>
+                                <tr class="hover:bg-slate-50">
+                                    <td class="text-left font-medium p-3">Competitive Battlecard</td>
+                                    <td>A</td>
+                                    <td>R</td>
+                                    <td>C</td>
+                                    <td>C</td>
+                                    <td>C</td>
+                                </tr>
+                                <tr class="hover:bg-slate-50">
+                                    <td class="text-left font-medium p-3">101/201/301 Training Delivery</td>
+                                    <td>A</td>
+                                    <td>R</td>
+                                    <td>C</td>
+                                    <td>I</td>
+                                    <td>I</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+
+                <!-- Section: Actions -->
+                 <section id="actions" class="content-section mb-12">
+                    <h2 class="text-3xl font-bold text-slate-900 mb-2">Action Plan</h2>
+                    <p class="text-slate-600 mb-6">A phased rollout plan to implement this operating model.</p>
+                    <div class="grid md:grid-cols-3 gap-8">
+                        <!-- Days 0-30 -->
+                        <div class="border-t-4 border-sky-500 bg-white p-6 rounded-lg shadow-md">
+                            <h3 class="text-lg font-bold">Phase 1: Foundation (Days 0-30)</h3>
+                            <ul class="mt-4 space-y-2 text-sm text-slate-700 list-disc list-inside">
+                                <li>Configure Confluence space, pages, and templates.</li>
+                                <li>Set up Slack channels and workflow form.</li>
+                                <li>Configure Productboard portal, tags, and triage SLA.</li>
+                                <li>Pilot 2 Capability Briefs and 1 Solution Playbook.</li>
+                                <li>Run first "101 Clinic" in one pilot region (e.g., APAC).</li>
+                            </ul>
+                        </div>
+                        <!-- Days 31-60 -->
+                        <div class="border-t-4 border-sky-500 bg-white p-6 rounded-lg shadow-md">
+                            <h3 class="text-lg font-bold">Phase 2: Activation (Days 31-60)</h3>
+                             <ul class="mt-4 space-y-2 text-sm text-slate-700 list-disc list-inside">
+                                <li>Add 3-5 more Capability Briefs.</li>
+                                <li>Publish v1 of Competitive Battlecards.</li>
+                                <li>Activate Salesforce custom fields and dashboards.</li>
+                                <li>Roll out bi-weekly regional clinics globally.</li>
+                                <li>Hold first monthly Product partnership review.</li>
+                            </ul>
+                        </div>
+                        <!-- Days 61-90 -->
+                        <div class="border-t-4 border-sky-500 bg-white p-6 rounded-lg shadow-md">
+                             <h3 class="text-lg font-bold">Phase 3: Scale & Optimize (Days 61-90)</h3>
+                             <ul class="mt-4 space-y-2 text-sm text-slate-700 list-disc list-inside">
+                                <li>Launch "201 Hands-On" certification path.</li>
+                                <li>Publish first quarterly competitive brief.</li>
+                                <li>Conduct first quarterly strategic review.</li>
+                                <li>Review OKRs and adjust for the next quarter.</li>
+                                <li>Gather feedback on the operating model itself.</li>
+                            </ul>
+                        </div>
+                    </div>
+                </section>
+
+            </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const sections = document.querySelectorAll('.content-section');
+            const sidebarLinks = document.querySelectorAll('#sidebar-nav a');
+            const mobileNav = document.getElementById('mobile-nav');
+            const toolTabs = document.getElementById('tool-tabs');
+            const toolContents = document.querySelectorAll('#tool-content > div');
+            
+            function updateActiveState(targetId) {
+                // Update content sections
+                sections.forEach(section => {
+                    if (section.id === targetId) {
+                        section.classList.add('active');
+                    } else {
+                        section.classList.remove('active');
+                    }
+                });
+
+                // Update navigation links
+                sidebarLinks.forEach(link => {
+                    const href = link.getAttribute('href');
+                    const isActive = href === `#${targetId}`;
+                    
+                    if (isActive) {
+                        link.classList.add('active');
+                    } else {
+                        link.classList.remove('active');
+                    }
+                });
+
+                // Update mobile nav
+                if (mobileNav && mobileNav.value !== targetId) {
+                    mobileNav.value = targetId;
+                }
+            }
+
+            function handleNavClick(e) {
+                e.preventDefault();
+                const targetId = e.currentTarget.getAttribute('href').substring(1);
+                updateActiveState(targetId);
+                window.scrollTo(0,0);
+            }
+
+            sidebarLinks.forEach(link => {
+                link.addEventListener('click', handleNavClick);
+            });
+            
+            if (mobileNav) {
+                mobileNav.addEventListener('change', (e) => {
+                    const targetId = e.target.value;
+                    updateActiveState(targetId);
+                    window.scrollTo(0,0);
+                });
+            }
+
+            // Initial state based on hash or default
+            const initialTarget = window.location.hash ? window.location.hash.substring(1) : 'purpose';
+            updateActiveState(initialTarget);
+
+            // Tool Tabs
+            if (toolTabs) {
+                 toolTabs.addEventListener('click', (e) => {
+                    if (e.target.tagName === 'BUTTON') {
+                        const target = e.target.dataset.target;
+
+                        toolTabs.querySelectorAll('button').forEach(btn => btn.classList.remove('active'));
+                        e.target.classList.add('active');
+
+                        toolContents.forEach(content => {
+                            content.classList.toggle('hidden', content.dataset.id !== target);
+                        });
+                    }
+                });
+            }
+
+            // Chart.js initialization
+            const ctx = document.getElementById('pillarsChart');
+            if(ctx) {
+                new Chart(ctx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: ['Dissemination', 'Intelligence', 'Enablement'],
+                        datasets: [{
+                            label: 'OSL Core Pillars',
+                            data: [33.3, 33.3, 33.3],
+                            backgroundColor: [
+                                'rgba(56, 189, 248, 0.7)', // sky-400
+                                'rgba(14, 165, 233, 0.7)', // sky-500
+                                'rgba(2, 132, 199, 0.7)'   // sky-600
+                            ],
+                            borderColor: [
+                                'rgba(56, 189, 248, 1)',
+                                'rgba(14, 165, 233, 1)',
+                                'rgba(2, 132, 199, 1)'
+                            ],
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                position: 'bottom',
+                            },
+                            title: {
+                                display: true,
+                                text: 'OSL Core Mission Pillars'
+                            }
+                        }
+                    }
+                });
+            }
+        });
+    </script>
+</body>
+</html>
